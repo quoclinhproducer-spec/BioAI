@@ -1,0 +1,23 @@
+1789866866: mosquitto version 2.1.2 starting
+1789866866: Config loaded from /mosquitto/config/mosquitto.conf.
+1789866866: Bridge support available.
+1789866866: Persistence support available.
+1789866866: TLS support available.
+1789866866: TLS-PSK support available.
+1789866866: Websockets support available.
+1789866866: Warning: File /mosquitto/config/mosquitto.passwd has world readable permissions. Future versions will refuse to load this file.
+To fix this, use `chmod 0700 /mosquitto/config/mosquitto.passwd`.
+
+1789866866: Warning: File /mosquitto/config/mosquitto.passwd owner is not mosquitto. Future versions will refuse to load this file.To fix this, use `chown mosquitto /mosquitto/config/mosquitto.passwd`.
+
+1789866866: Warning: File /mosquitto/config/mosquitto.passwd group is not mosquitto. Future versions will refuse to load this file.
+
+1789866866: Plugin builtin-security has registered to receive 'basic-auth' events.
+1789866866: Opening ipv4 listen socket on port 1883.
+1789866866: Opening ipv6 listen socket on port 1883.
+1789866866: Opening ipv4 listen socket on port 9001.
+1789866866: Opening ipv6 listen socket on port 9001.
+1789866866: mosquitto version 2.1.2 running
+1789866963: New connection from 172.18.0.1:57298 on port 1883.
+1789866963: Client mqttjs_c19ef56b [172.18.0.1:57298] disconnected: not authorised.
+1789868666: Saving in-memory database to /mosquitto/data//mosquitto.db.

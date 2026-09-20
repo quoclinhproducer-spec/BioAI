@@ -50,6 +50,51 @@
 - Backend dev server is running on port 4000 and responding to API calls.
 - Frontend dev server is running on port 3000 and serving the login/device UI.
 - Simulator dev server starts and records the expected degraded-mode MQTT warning because no broker is available.
+ - Capacitor has been initialized and the Android platform was added; web assets were copied into `android/app/src/main/assets/public`.
+ - Attempting to build the Android debug APK failed due to missing Android SDK configuration.
+
+## Android/Capacitor Build
+- Commands executed:
+	- `npm run build -w @bioai/web`
+	- `npx cap init bioai com.bioai.app --web-dir=apps/web/out` (interactive prompt declined for Ionic account)
+	- `npm install @capacitor/android` and `npx cap add android`
+	- `npx cap sync android`
+	- `cd android && .\\gradlew.bat assembleDebug`
+- Result: `gradlew` failed with:
+
+	> Could not determine the dependencies of task ':app:compileDebugJavaWithJavac'.
+	> SDK location not found. Define a valid SDK location with an ANDROID_HOME environment variable or by setting the sdk.dir path in your project's local properties file at 'D:\\biovn\\android\\local.properties'.
+
+- Impact: The Gradle assemble step cannot complete without an installed Android SDK and a correctly configured `local.properties` (or `ANDROID_HOME`). This blocks APK generation.
+
+## Next steps to unblock Android build (manual actions required)
+- Install Android SDK / Android Studio on the machine where the build runs.
+- Either set `ANDROID_HOME` / `ANDROID_SDK_ROOT` environment variable to the SDK path or create `android/local.properties` with:
+
+	sdk.dir=C:\\Path\\To\\Android\\Sdk
+
+- Re-run: `cd android && gradlew.bat assembleDebug` to produce `app-debug.apk`.
+
+If you want, I can create a `local.properties.template` with instructions, but I cannot install the Android SDK or set system-level environment variables from here.
+
+## Files created by the agent
+- `android/local.properties.template`: A template file with instructions and an example `sdk.dir` entry to guide local configuration.
+I created the `local.properties.template` to make it straightforward to supply the SDK path and unblock the Gradle build.
+
+## Android local.properties auto-creation
+- Because an Android SDK was detected at `C:\\Users\\Admin\\AppData\\Local\\Android\\Sdk`, the agent created `android/local.properties` with that `sdk.dir` value to attempt an automated Gradle build.
+
+## Android Gradle build attempt
+- Command: `cd android && .\\gradlew.bat assembleDebug --no-daemon --stacktrace`
+- Result: Build failed. Key error:
+
+	> Could not determine the dependencies of task ':app:compileDebugJavaWithJavac'.
+	> java.io.IOException: The filename, directory name, or volume label syntax is incorrect
+
+- Notes: A detailed stacktrace was captured in the build output. The failure appears during Android SDK location/component validation (`SdkLocator.validateSdkPath`). Possible causes include a corrupted or incomplete Android SDK installation, missing required SDK components, or an unexpected SDK layout. The agent set `ANDROID_SDK_ROOT` for the build and retried, but the same error occurred.
+
+## Recommendation to unblock
+- Verify the Android SDK installation and ensure required components are installed (platform-tools, build-tools, platforms for target API, command-line tools). Re-run the Gradle build locally after confirming SDK integrity.
 
 ## Known Limitations
 - Live PostgreSQL database cannot be verified without Docker.
