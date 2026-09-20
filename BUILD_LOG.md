@@ -5,7 +5,7 @@
 | Phase | Status | Last commit | Tag | DoD items met / total | Notes |
 | --- | --- | --- | --- | --- | --- |
 | 1 | DONE | ba182ec96d327294eb76cc598ec48b99475a72c2 | phase-1-done | 1/1 | Repository scaffolded, backend auth module verified, Docker stack and UI shell prepared. |
-| 2 | DONE | pending | phase-2-done | 1/1 | Safety engine, rule list, alerts, commands, and the operations dashboard are implemented and verified. |
+| 2 | DONE | 14b1d9d4cab097f2b7d0cd2ef455c2e0f8b9c010 | phase-2-done | 1/1 | Safety engine, rule list, alerts, commands, and the operations dashboard are implemented and verified. |
 | 3 | NOT_STARTED | - | - | 0/0 | Awaiting process modules. |
 | 4 | NOT_STARTED | - | - | 0/0 | Awaiting AI modules. |
 | 5 | NOT_STARTED | - | - | 0/0 | Awaiting platform administration and Android work. |

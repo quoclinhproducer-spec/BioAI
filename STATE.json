@@ -1,7 +1,7 @@
 {
   "phase": 2,
   "currentPhaseStatus": "DONE",
-  "lastGreenCommit": "pending",
+  "lastGreenCommit": "14b1d9d4cab097f2b7d0cd2ef455c2e0f8b9c010",
   "blockedItems": [],
   "nextAction": "Proceed to Phase 3 with materials, recipes, and batch-state process administration.",
   "phases": {
