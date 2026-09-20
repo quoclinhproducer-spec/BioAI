@@ -1,0 +1,16 @@
+{
+  "name": "bioai",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "docker compose up --build",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "bootstrap": "bash scripts/bootstrap.sh",
+    "bootstrap:win": "powershell -ExecutionPolicy Bypass -File scripts/bootstrap.ps1"
+  }
+}

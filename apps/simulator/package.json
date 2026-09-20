@@ -1,0 +1,11 @@
+{
+  "name": "@bioai/simulator",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "mqtt": "^5.0.1"
+  }
+}

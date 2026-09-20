@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 220 25% 97%;
+  --foreground: 222 47% 11%;
+  --muted: 215 16% 47%;
+  --primary: 211 96% 40%;
+  --success: 142 72% 35%;
+  --warning: 32 94% 43%;
+  --danger: 0 84% 45%;
+  --info: 207 90% 54%;
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  --shadow-card: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+.dark {
+  --background: 222 47% 8%;
+  --foreground: 210 40% 98%;
+  --muted: 215 20% 73%;
+  --primary: 214 90% 65%;
+  --success: 142 60% 52%;
+  --warning: 32 90% 62%;
+  --danger: 0 72% 56%;
+  --info: 207 90% 62%;
+  --shadow-card: 0 14px 42px rgba(15, 23, 42, 0.32);
+}
+
+html {
+  font-family: Inter, 'Segoe UI', sans-serif;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+button, input, select, textarea {
+  font: inherit;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
