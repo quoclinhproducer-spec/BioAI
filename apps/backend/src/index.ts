@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { createTokenPair, isAdmin, verifyAccessToken, type AuthUser } from './auth.js';
+import { evaluateSafety } from './safety.js';
 import type { AuditRecord, DeviceRecord, UserRecord } from './types.js';
 
 dotenv.config();
@@ -60,7 +61,24 @@ const settings = new Map<string, unknown>([
   ['defaultLivenessTimeoutSeconds', 180],
   ['alertOfflineDurationMinutes', 15],
   ['defaultLanguage', 'vi'],
+  ['commandTimeoutSeconds', 90],
 ]);
+
+const rules = [
+  { id: 'rule-temp', name: 'Temperature ceiling', enabled: true, severity: 'critical', scope: 'DEVICE', message: 'Reject any reading above 35°C' },
+  { id: 'rule-ph', name: 'pH band', enabled: true, severity: 'critical', scope: 'DEVICE', message: 'Reject readings outside 5.8–8.5' },
+  { id: 'rule-moisture', name: 'Moisture guard', enabled: false, severity: 'warning', scope: 'DEVICE', message: 'Warn when moisture moves outside 20–80%' },
+];
+
+const alerts = [
+  { id: 'alert-1', deviceId: 'dev-2', severity: 'warning', status: 'open', message: 'Dryer D3 reported stale telemetry at 02:10', source: 'SYSTEM' },
+  { id: 'alert-2', deviceId: 'dev-1', severity: 'critical', status: 'open', message: 'Temperature exceeded threshold', source: 'SAFETY_ENGINE' },
+];
+
+const commands = [
+  { id: 'cmd-1', deviceId: 'dev-1', action: 'cooling.set', status: 'COMPLETED', source: 'OPERATOR', createdAt: new Date().toISOString() },
+  { id: 'cmd-2', deviceId: 'dev-2', action: 'dryer.pause', status: 'PENDING', source: 'AUTO', createdAt: new Date().toISOString() },
+];
 
 function authUserFromHeader(req: Request) {
   const header = req.headers.authorization ?? '';
@@ -240,6 +258,71 @@ app.get('/api/system/health', requireAuth, requireAdmin, (_req, res) => {
     mqtt: 'ready',
     uptime: '0d 00:00:00',
   });
+});
+
+app.get('/api/operations/summary', requireAuth, (_req, res) => {
+  const safetyResult = evaluateSafety({ deviceId: 'dev-1', online: true, temperature: 36.5, moisture: 57, ph: 7.1 });
+  res.json({
+    devicesOnline: devices.filter((device) => device.status === 'ONLINE').length,
+    alertsOpen: alerts.filter((alert) => alert.status === 'open').length,
+    rulesEnabled: rules.filter((rule) => rule.enabled).length,
+    lastSafetyCheck: safetyResult,
+  });
+});
+
+app.get('/api/rules', requireAuth, (_req, res) => {
+  res.json(rules);
+});
+
+app.post('/api/rules/:id/toggle', requireAuth, requireAdmin, (req, res) => {
+  const rule = rules.find((entry) => entry.id === req.params.id);
+  if (!rule) return res.status(404).json({ error: 'Rule not found' });
+  rule.enabled = !rule.enabled;
+  return res.json(rule);
+});
+
+app.get('/api/alerts', requireAuth, (_req, res) => {
+  res.json(alerts);
+});
+
+app.post('/api/alerts/:id/acknowledge', requireAuth, (req, res) => {
+  const alert = alerts.find((entry) => entry.id === req.params.id);
+  if (!alert) return res.status(404).json({ error: 'Alert not found' });
+  alert.status = 'acknowledged';
+  return res.json(alert);
+});
+
+app.get('/api/commands', requireAuth, (_req, res) => {
+  res.json(commands);
+});
+
+app.post('/api/commands', requireAuth, (req, res) => {
+  const body = req.body ?? {};
+  const snapshot = {
+    deviceId: String(body.deviceId ?? 'dev-1'),
+    online: body.online ?? true,
+    temperature: Number(body.temperature ?? 25),
+    moisture: Number(body.moisture ?? 55),
+    ph: Number(body.ph ?? 7),
+    oxygen: Number(body.oxygen ?? 21),
+  };
+
+  const safety = evaluateSafety(snapshot);
+  if (!safety.allowed) {
+    return res.status(400).json({ error: 'Command rejected by safety engine', reason: safety.reason, severity: safety.severity });
+  }
+
+  const record = {
+    id: `cmd-${Date.now()}`,
+    deviceId: snapshot.deviceId,
+    action: String(body.action ?? 'status.refresh'),
+    status: 'SENT',
+    source: String(body.source ?? 'OPERATOR'),
+    createdAt: new Date().toISOString(),
+  };
+
+  commands.unshift(record);
+  return res.status(201).json(record);
 });
 
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
