@@ -8,6 +8,9 @@ docs/evidence/**
 coverage
 backend/dist
 apps/web/dist
+**/*.tsbuildinfo
+**/vite.config.js
+**/vite.config.d.ts
 backend/prisma/dev.db
 backend/prisma/dev.db-journal
 Docker volumes

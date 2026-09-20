@@ -4,7 +4,7 @@
 
 | Phase | Status | Last commit | Tag | DoD items met / total | Notes |
 | --- | --- | --- | --- | --- | --- |
-| 1 | DONE | pending | phase-1-done | 1/1 | Repository scaffolded, backend auth module verified, Docker stack and UI shell prepared. |
+| 1 | DONE | 4469bf6ea364a46267ab95c5c0f8171776caa783 | phase-1-done | 1/1 | Repository scaffolded, backend auth module verified, Docker stack and UI shell prepared. |
 | 2 | NOT_STARTED | - | - | 0/0 | Awaiting Phase 2 operational modules. |
 | 3 | NOT_STARTED | - | - | 0/0 | Awaiting process modules. |
 | 4 | NOT_STARTED | - | - | 0/0 | Awaiting AI modules. |
