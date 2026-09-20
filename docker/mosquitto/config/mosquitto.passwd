@@ -1,0 +1,5 @@
+# Placeholder password file for Mosquitto authentication.
+# In a real local environment, generate with:
+# mosquitto_passwd -c /path/to/mosquitto.passwd bioai
+# and then supply the actual hashed credential.
+# This project intentionally does not use anonymous MQTT access.

@@ -1,0 +1,379 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMINISTRATOR
+  OPERATOR
+  VIEWER
+}
+
+enum DeviceConnectionType {
+  MQTT
+  SERIAL
+  SIMULATOR
+}
+
+enum DeviceStatusValue {
+  ONLINE
+  OFFLINE
+}
+
+enum SensorType {
+  TEMPERATURE
+  MOISTURE
+  PH
+  OXYGEN
+  OTHER
+}
+
+enum ActuatorType {
+  BLOWER
+  AERATOR
+  HEATER
+  MIXER
+  SPRAYER
+  OTHER
+}
+
+enum TelemetryQualityValue {
+  VALID
+  STALE
+  INVALID
+  MISSING
+}
+
+enum CommandSource {
+  USER
+  RULE_ENGINE
+  AI_SUGGESTION
+}
+
+enum CommandStatusValue {
+  CREATED
+  SENT
+  ACKNOWLEDGED
+  EXECUTING
+  COMPLETED
+  FAILED
+  REJECTED
+  TIMEOUT
+}
+
+enum AlertSeverityValue {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum AlertSource {
+  RULE_ENGINE
+  SAFETY_ENGINE
+  AI_ANOMALY
+  SYSTEM
+}
+
+enum AlertStatusValue {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+enum RuleExecutionResult {
+  COMMAND_ISSUED
+  REJECTED_BY_SAFETY
+  SKIPPED_DISABLED
+  ERROR
+}
+
+enum RecipeStatus {
+  DRAFT
+  AI_OPTIMIZED
+  CONFIRMED
+}
+
+enum BatchPhaseValue {
+  INIT
+  ACTIVE_COMPOSTING
+  THERMOPHILIC
+  COOLING
+  CURING
+  COMPLETE
+  SENSOR_FAULT
+  NETWORK_LOST
+  ACTUATOR_FAULT
+  EMERGENCY
+  SAFE_MODE
+}
+
+enum BatchMaterialSource {
+  manual
+  ai_vision_estimate
+}
+
+enum AIResultModule {
+  VISION_RECOGNITION
+  RECIPE_OPTIMIZATION
+  ANOMALY_DETECTION
+  PROCESS_INTELLIGENCE
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         UserRole
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Device {
+  id               String               @id @default(cuid())
+  name             String
+  type             String
+  firmwareVersion  String
+  connectionType   DeviceConnectionType
+  status           DeviceStatusValue    @default(OFFLINE)
+  lastSeenAt       DateTime?
+  location         String?
+  batteryLevel     Float?
+  signalStrength   Float?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  capabilities     DeviceCapability[]
+  sensors          Sensor[]
+  actuators        Actuator[]
+  telemetry        Telemetry[]
+  commands         Command[]
+  alerts           Alert[]
+  batches          Batch[]
+}
+
+model DeviceCapability {
+  id       String @id @default(cuid())
+  deviceId String
+  key      String
+  metadata Json?
+
+  device Device @relation(fields: [deviceId], references: [id])
+
+  @@unique([deviceId, key])
+}
+
+model Sensor {
+  id         String          @id @default(cuid())
+  deviceId   String
+  key        String
+  sensorType SensorType
+  unit       String?
+  minValid   Float?
+  maxValid   Float?
+  telemetry  Telemetry[]
+
+  device Device @relation(fields: [deviceId], references: [id])
+
+  @@unique([deviceId, key])
+}
+
+model Actuator {
+  id           String       @id @default(cuid())
+  deviceId     String
+  key          String
+  actuatorType ActuatorType
+  commands     Command[]
+
+  device Device @relation(fields: [deviceId], references: [id])
+
+  @@unique([deviceId, key])
+}
+
+model Telemetry {
+  id        String                 @id @default(cuid())
+  deviceId  String
+  sensorId  String
+  value     Float
+  quality   TelemetryQualityValue
+  timestamp DateTime
+  receivedAt DateTime             @default(now())
+
+  device Device @relation(fields: [deviceId], references: [id])
+  sensor Sensor @relation(fields: [sensorId], references: [id])
+
+  @@index([deviceId, timestamp])
+  @@index([sensorId, timestamp])
+}
+
+model Command {
+  id            String            @id @default(cuid())
+  deviceId      String
+  actuatorId    String?
+  desiredState  String
+  parameters    Json?
+  source        CommandSource
+  status        CommandStatusValue @default(CREATED)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  rejectionReason String?
+  device        Device            @relation(fields: [deviceId], references: [id])
+  actuator      Actuator?         @relation(fields: [actuatorId], references: [id])
+  events        CommandEvent[]
+}
+
+model CommandEvent {
+  id        String            @id @default(cuid())
+  commandId String
+  status    CommandStatusValue
+  detail    String?
+  timestamp DateTime          @default(now())
+
+  command Command @relation(fields: [commandId], references: [id])
+}
+
+model Rule {
+  id        String   @id @default(cuid())
+  name      String
+  condition Json
+  action    Json
+  priority  Int      @default(0)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  executions RuleExecution[]
+}
+
+model RuleExecution {
+  id         String              @id @default(cuid())
+  ruleId     String
+  triggeredAt DateTime           @default(now())
+  result     RuleExecutionResult
+  detail     String?
+
+  rule Rule @relation(fields: [ruleId], references: [id])
+}
+
+model Alert {
+  id        String           @id @default(cuid())
+  deviceId  String?
+  batchId   String?
+  type      String
+  severity  AlertSeverityValue
+  message   String
+  source    AlertSource
+  status    AlertStatusValue @default(OPEN)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  device Device? @relation(fields: [deviceId], references: [id])
+  batch  Batch?  @relation(fields: [batchId], references: [id])
+}
+
+model Material {
+  id            String   @id @default(cuid())
+  name          String
+  carbonPct     Float?
+  nitrogenPct   Float?
+  cnRatio       Float?
+  moisturePct   Float?
+  density       Float?
+  costPerUnit   Float?
+  availability  String?
+  source        String?
+  dataQuality   String?
+  assumptions   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  recipeItems   RecipeItem[]
+  batchMaterials BatchMaterial[]
+}
+
+model Recipe {
+  id          String       @id @default(cuid())
+  name        String
+  createdBy   String?
+  status      RecipeStatus @default(DRAFT)
+  createdAt   DateTime     @default(now())
+  items       RecipeItem[]
+  batches     Batch[]
+}
+
+model RecipeItem {
+  id        String  @id @default(cuid())
+  recipeId  String
+  materialId String
+  quantity  Float
+  unit      String
+
+  recipe   Recipe   @relation(fields: [recipeId], references: [id])
+  material Material @relation(fields: [materialId], references: [id])
+}
+
+model Batch {
+  id             String         @id @default(cuid())
+  name           String
+  deviceId       String
+  recipeId       String?
+  startTime      DateTime?
+  currentPhase   BatchPhaseValue @default(INIT)
+  status         String         @default("ACTIVE")
+  createdAt      DateTime       @default(now())
+  events         ProcessEvent[]
+  alerts         Alert[]
+  materialLinks  BatchMaterial[]
+  aiResults      AIResult[]
+  environmentalReports EnvironmentalReport[]
+
+  device Device @relation(fields: [deviceId], references: [id])
+  recipe Recipe? @relation(fields: [recipeId], references: [id])
+}
+
+model BatchMaterial {
+  id        String            @id @default(cuid())
+  batchId   String
+  materialId String
+  quantity  Float
+  unit      String
+  source    BatchMaterialSource
+
+  batch    Batch    @relation(fields: [batchId], references: [id])
+  material Material @relation(fields: [materialId], references: [id])
+}
+
+model ProcessEvent {
+  id        String         @id @default(cuid())
+  batchId   String
+  type      String
+  detail    String?
+  timestamp DateTime       @default(now())
+
+  batch Batch @relation(fields: [batchId], references: [id])
+}
+
+model AIResult {
+  id          String         @id @default(cuid())
+  batchId     String?
+  module      AIResultModule
+  modelVersion String?
+  input       Json
+  output      Json
+  confidence  Float?
+  createdAt   DateTime       @default(now())
+
+  batch Batch? @relation(fields: [batchId], references: [id])
+}
+
+model EnvironmentalReport {
+  id          String   @id @default(cuid())
+  batchId     String
+  methodology String
+  assumptions Json?
+  inputData   Json
+  results     Json
+  createdAt   DateTime @default(now())
+
+  batch Batch @relation(fields: [batchId], references: [id])
+}

@@ -1,0 +1,19 @@
+{
+  "name": "bioai",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w @bioai/backend\" \"npm run dev -w @bioai/simulator\" \"npm run dev -w @bioai/web\"",
+    "build": "npm run build -w @bioai/shared && npm run build -w @bioai/backend && npm run build -w @bioai/web",
+    "test": "npm run test -w @bioai/backend",
+    "lint": "npm run lint -w @bioai/backend && npm run lint -w @bioai/web"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1",
+    "typescript": "^5.6.3"
+  }
+}
